@@ -1,0 +1,1 @@
+{"name":"lunabotics-cloud-erp","private":true,"scripts":{"build":"node scripts/build.mjs","test":"node tests/cloud.test.mjs && node tests/logic.test.cjs","start":"node scripts/preview.mjs"}}
