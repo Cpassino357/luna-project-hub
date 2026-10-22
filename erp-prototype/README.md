@@ -1,33 +1,38 @@
-# Lunabotics Project ERP — prototype
+# Lunabotics Cloud ERP
 
-Separate browser-based engineering project ERP for the 2027 UB Lunabotics robot.
+Engineering, purchasing, inventory, documentation and budget workspace for UB Lunabotics.
 
-## Run
+## Shared storage and sign-in
 
-Serve `dist/` with any static web server, for example `python -m http.server 8765 --directory dist`, then open http://localhost:8765. No build or package installation is required. GitHub Pages can serve the `dist` contents; alternatively move them into a Pages `/docs` folder.
+The hosted application uses Sites-managed ChatGPT sign-in and its private member allowlist. All authorized members share one workspace in the Sites-provisioned R2 bucket (`BUCKET`), not individual browser records. Cloud records persist independently of devices and application deployments. Membership is managed through the Site access policy. Signing in alone does not grant a new person membership. Never make the Site public to work around membership.
 
-## Included
+The first owner visit chooses either the master-budget starting records or the existing browser records. Existing local records are never uploaded automatically. You can also import a JSON backup after initialization. Import replaces the shared workspace and requires explicit confirmation. Export remains available for backups and unsaved drafts.
 
-- Eight units: Drivetrain, Chassis, Shoulder, Legs, Drum, Electronics, Misc, Documentation.
-- Unit purchase/fabricate/assemble deadlines and individual documentation deadlines.
-- Component catalog with separate per-unit requirements, drawings, revisions, suppliers, estimates, quantities, room locations, and parent assemblies.
-- Consolidated purchasing by component identity, with unreleased demand warnings and earliest released unit purchase deadline.
-- Partial purchase allocation by unit; confirmed purchase prices, tax and shipping; inventory and fabrication quantities.
-- Expected cost = confirmed purchase cost plus estimated cost of remaining required quantities. Actual cost = confirmed purchases only. Assembly group labels do not add duplicate costs.
-- Editable unit budget allocation, $3,000 team total, backup export/import.
+Each save is confirmed by the server. Reads refresh every ten seconds when a form is not being edited. Conditional storage writes reject stale revisions, including races between members. A failed save retains the draft on screen, stops further editing, and offers export/reload; connection failures also offer retry. No application records are written to localStorage. Old browser data is only read for optional migration.
 
-## Data provenance and unresolved values
+## Run and test
 
-Initial data is transcribed from the supplied MASTER BUDGET.pdf and user corrections. All five Misc items are quantity one and received, totaling $164.95 before tax. Mechanical unit assignments are provisional. Mechanical items marked Received are imported as historical purchases; the hex shaft collar marked Hold remains Design. Verify supplier prices and receipt totals before operational use. The electrical bolt line is excluded because the line and summary conflict. Receipt tax, shipping, purchase dates, room locations, drawing links, and deadlines are unknown. No invented deadline or mechanical budget split is assigned. Electronics allocation is $600; Misc $300; the five mechanical units share an unallocated $2,100 pool.
+Requires Node.js 20 or later, no dependencies for build/server tests:
 
-## Prototype limits
+```sh
+node scripts/build.mjs
+node tests/cloud.test.mjs
+node tests/logic.test.cjs
+node scripts/preview.mjs
+```
 
-Records live only in localStorage in the current browser and origin. This is not a shared database or a club production system. Export JSON backups regularly. Moving between local preview, GitHub Pages, and other hosting creates separate browser datasets; use export/import to transfer data. There is no authentication, multiuser synchronization, upload storage, revision approval audit trail, or immutable purchase ledger yet. Drawing attachments use HTTP(S) links. Assembly readiness is calculated from component quantities; welding completion is tracked through component stages rather than a standalone work order.
+Open http://127.0.0.1:8765. **The local preview injects a fake test identity and uses in-memory storage. It is not a production server and loses records when stopped.** Deploy the built Worker through Sites for managed sign-in and persistent R2 storage. `tests/browser-cloud.cjs` requires Playwright and Chrome and tests isolated sessions, shared records, conflict handling, and mobile layout.
 
-## Next implementation stage
+Source UI files are in `web/`, server code in `worker/index.mjs`, and the build embeds assets into `dist/server/index.js`. Build output is tracked for the hosted deployment. `.openai/hosting.json` selects the existing Site and declares R2. The GitHub repository mirrors these sources under `erp-prototype/`; GitHub Pages alone cannot run the cloud server.
 
-Add a shared database, member permissions, server validation, file storage, explicit assembly/welding work orders, purchase amendments/returns, audit history, and receipt reconciliation before club-wide use.
+## Included workflow
 
-## Validation
+Eight units: Drivetrain, Chassis, Shoulder, Legs, Drum, Electronics, Misc, Documentation. Unit purchase/fabricate/assemble deadlines; individual documentation deadlines; component catalog, per-unit requirements, linked drawings/revisions, suppliers, estimates, inventory locations, fabrication quantities and parent assemblies. Purchasing groups released requirements by component identity and flags unreleased demand. Expected costs include design quantities and actual purchase costs; actual costs include confirmed purchases only. No assembly cost double-counting.
 
-Run `node tests/logic.test.cjs` to verify consolidated purchasing, partial releases, allocation of purchased quantities, actual/expected cost arithmetic and missing estimates. Browser scenarios are in `tests/browser.cjs` (requires Playwright and a Chrome executable).
+## Initial data and outstanding reconciliation
+
+Initial records come from MASTER BUDGET.pdf and the owner's corrections. Five Misc items are received, quantity one, $164.95 before tax. Mechanical unit assignments are provisional. Mechanical items marked Received are historical purchases; the hex shaft collar on Hold remains Design. The electrical bolt row is excluded because its log and summary conflict. Verify prices and receipt totals. Tax, shipping, dates, room locations, drawing links and deadlines remain unknown where not supplied. The team budget is $3,000: $600 Electronics, $300 Misc, and $2,100 awaiting allocation among five mechanical units.
+
+## Current limits
+
+Drawings use links, not uploaded files. Welding readiness groups components by parent assembly; dedicated welding work orders and roles within the ERP are future work. Authorized members currently have equal editing access. Purchase amendments, returns, full audit history and automated historical backups are not yet included. Server validation enforces component references, quantities, budgets, links, and purchase consistency. Keep periodic JSON exports.

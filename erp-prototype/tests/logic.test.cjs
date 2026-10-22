@@ -1,4 +1,4 @@
-const assert=require('node:assert/strict');const E=require('../dist/logic.js');
+const assert=require('node:assert/strict');const E=require('../web/logic.js');
 const s={parts:[{id:'bearing',price:10}],requirements:[{id:'a',part:'bearing',unit:'Chassis',qty:4,stage:'Released'},{id:'b',part:'bearing',unit:'Legs',qty:2,stage:'Design'}],orders:[]};
 let g=E.groups(s)[0];assert.equal(g.qty,4);assert.equal(g.held.length,1);s.requirements[1].stage='Released';assert.equal(E.groups(s)[0].qty,6);
 s.orders.push({requirement:'a',qty:2,price:12,extra:3});assert.equal(E.actual(s,'a'),27);assert.equal(E.expected(s,s.requirements[0]),47);assert.equal(E.groups(s)[0].qty,4);
